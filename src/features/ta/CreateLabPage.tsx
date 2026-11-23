@@ -18,6 +18,77 @@ interface LabTestInput {
   expectedOutput: string;
 }
 
+const utf8Size = (value: string) => new TextEncoder().encode(value).length;
+
+function isValidDeduction(value: number) {
+  if (!Number.isFinite(value) || value < 0.01 || value > 10) return false;
+  const scaled = value * 100;
+  return Math.abs(scaled - Math.round(scaled)) < 1e-8;
+}
+
+function validateLab(
+  classId: string,
+  title: string,
+  statement: string,
+  opensAt: string,
+  deadlineAt: string,
+  constraints: LabConstraintInput[],
+  tests: LabTestInput[],
+  cpuSeconds: number,
+  memoryMb: number,
+): string | null {
+  if (!classId) return 'Vui lòng chọn lớp học';
+  if (!title.trim()) return 'Tên Lab không được để trống';
+  if (title.trim().length > 160) return 'Tên Lab không được vượt quá 160 ký tự';
+  if (!statement.trim()) return 'Đề bài không được để trống';
+  if (utf8Size(statement) > 256 * 1024)
+    return 'Đề bài không được vượt quá 256 KiB';
+
+  const opensAtDate = new Date(opensAt);
+  const deadlineAtDate = new Date(deadlineAt);
+  if (!opensAt || Number.isNaN(opensAtDate.getTime()))
+    return 'Thời gian mở Lab không hợp lệ';
+  if (!deadlineAt || Number.isNaN(deadlineAtDate.getTime()))
+    return 'Deadline không hợp lệ';
+  if (opensAtDate >= deadlineAtDate) return 'Thời gian mở phải trước deadline';
+
+  if (!Number.isInteger(cpuSeconds) || cpuSeconds < 1 || cpuSeconds > 5)
+    return 'CPU tối đa phải là số nguyên từ 1 đến 5 giây';
+  if (!Number.isInteger(memoryMb) || memoryMb < 64 || memoryMb > 512)
+    return 'Bộ nhớ tối đa phải là số nguyên từ 64 đến 512 MB';
+
+  if (constraints.length < 1 || constraints.length > 100)
+    return 'Lab phải có từ 1 đến 100 ràng buộc';
+  const constraintIds = new Set<string>();
+  for (const constraint of constraints) {
+    const id = constraint.id.trim();
+    const text = constraint.text.trim();
+    if (!id || id.length > 40) return 'Mã ràng buộc phải từ 1 đến 40 ký tự';
+    if (constraintIds.has(id)) return 'Mã ràng buộc phải là duy nhất';
+    constraintIds.add(id);
+    if (!text) return 'Nội dung ràng buộc không được để trống';
+    if (utf8Size(text) > 8 * 1024)
+      return 'Mỗi nội dung ràng buộc không được vượt quá 8 KiB';
+    if (!isValidDeduction(constraint.deduction))
+      return 'Điểm trừ phải từ 0.01 đến 10.00 và tối đa 2 chữ số thập phân';
+  }
+
+  if (tests.length < 1 || tests.length > 100)
+    return 'Lab phải có từ 1 đến 100 test';
+  let totalTestSize = 0;
+  for (let index = 0; index < tests.length; index++) {
+    const test = tests[index];
+    const testSize = utf8Size(test.input) + utf8Size(test.expectedOutput);
+    if (testSize > 256 * 1024)
+      return `Test ${index + 1} không được vượt quá 256 KiB`;
+    totalTestSize += testSize;
+  }
+  if (totalTestSize > 10 * 1024 * 1024)
+    return 'Tổng dung lượng test không được vượt quá 10 MiB';
+
+  return null;
+}
+
 export default function CreateLabPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -35,6 +106,7 @@ export default function CreateLabPage() {
     ]),
     [cpuSeconds, setCpuSeconds] = useState(1),
     [memoryMb, setMemoryMb] = useState(256),
+    [isSubmitting, setIsSubmitting] = useState(false),
     [error, setError] = useState('');
   useEffect(() => {
     api<{ classes: ClassItem[] }>('/classes?page=1&limit=100')
@@ -82,19 +154,28 @@ export default function CreateLabPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    const validationError = validateLab(
+      classId,
+      title,
+      statement,
+      opensAt,
+      deadlineAt,
+      constraints,
+      tests,
+      cpuSeconds,
+      memoryMb,
+    );
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setIsSubmitting(true);
     try {
-      const constraintIds = new Set(
-        constraints.map((constraint) => constraint.id.trim()),
-      );
-      if (constraintIds.size !== constraints.length) {
-        setError('Mã ràng buộc phải là duy nhất');
-        return;
-      }
       await api(`/classes/${classId}/labs`, {
         method: 'POST',
         body: JSON.stringify({
-          title,
-          statement,
+          title: title.trim(),
+          statement: statement.trim(),
           opensAt: new Date(opensAt).toISOString(),
           deadlineAt: new Date(deadlineAt).toISOString(),
           constraints: constraints.map((constraint) => ({
@@ -103,12 +184,17 @@ export default function CreateLabPage() {
             deduction: constraint.deduction,
           })),
           limits: { cpuSeconds, memoryMb },
-          tests,
+          tests: tests.map((test) => ({
+            input: test.input,
+            expectedOutput: test.expectedOutput,
+          })),
         }),
       });
       navigate('/ta/labs');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Không thể tạo Lab');
+    } finally {
+      setIsSubmitting(false);
     }
   };
   return (
@@ -144,6 +230,7 @@ export default function CreateLabPage() {
               id="lab-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              maxLength={160}
               required
             />
           </label>
@@ -353,8 +440,8 @@ export default function CreateLabPage() {
             ))}
           </div>
         </div>
-        <Button type="submit" className="mt-4">
-          Tạo Lab
+        <Button type="submit" className="mt-4" disabled={isSubmitting}>
+          {isSubmitting ? 'Đang tạo Lab...' : 'Tạo Lab'}
         </Button>
       </Card>
     </form>
