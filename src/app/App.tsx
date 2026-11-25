@@ -11,6 +11,7 @@ import LabDetailPage from '../features/labs/LabDetailPage';
 import ProfilePage from '../features/profile/ProfilePage';
 import CreateLabPage from '../features/ta/CreateLabPage';
 import TaClassesPage from '../features/ta/TaClassesPage';
+import ReviewQueuePage from '../features/ta/ReviewQueuePage';
 import type { Role } from '../types';
 
 function roleHome(role: Role) {
@@ -104,6 +105,14 @@ function Protected() {
           element={
             <RoleGuard allowedRoles={['TA']}>
               <CreateLabPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/ta/labs/:labId/reviews"
+          element={
+            <RoleGuard allowedRoles={['TA']}>
+              <ReviewQueuePage />
             </RoleGuard>
           }
         />

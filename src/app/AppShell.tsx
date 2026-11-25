@@ -77,7 +77,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             logout();
             navigate('/login');
           }}
-          className="absolute bottom-4 left-3 flex gap-2 rounded-lg px-3 py-2 text-sm text-[#667085]"
+          className="absolute bottom-4 left-3 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#667085] transition-colors hover:bg-red-50 hover:text-red-600"
         >
           <LogOut size={17} />
           Đăng xuất

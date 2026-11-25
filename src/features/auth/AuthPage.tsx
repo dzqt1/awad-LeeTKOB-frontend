@@ -73,6 +73,7 @@ export default function AuthPage() {
                   id="display-name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Nguyễn Văn A"
                   required
                 />
               </label>
@@ -90,6 +91,7 @@ export default function AuthPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   type="text"
+                  placeholder="name@example.com"
                   required
                 />
               </div>
@@ -107,6 +109,7 @@ export default function AuthPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
                   type={show ? 'text' : 'password'}
+                  placeholder="••••••••"
                   required
                 />
                 <button

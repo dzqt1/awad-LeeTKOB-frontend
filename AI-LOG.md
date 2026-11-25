@@ -25,3 +25,15 @@ unimplemented contract-only features as working APIs.
 
 - **Changed:** wired screen to API endpoints, add constraints and tests input in lab creating page.
 - **Rejected:** using mock users, classes, labs, or submission results as final application data. Seed/demo objects were removed in favor of backend responses.
+## TA review queue — 2026-11-25
+
+Tool: Codex, local shell/build/lint tools.
+- **Changed:** added an assigned-TA review page and link from lab management.
+  The page uses real backend queue/decision endpoints, displays source/evidence,
+  requires an explicit verdict and reason, and supports versioned overrides.
+- **Rejected:** defaulting unsure to a deduction, inventing queue data, or showing
+  unpublished proposals to students. No model key is used in the browser.
+- **Validation:** production build, ESLint and Biome passed; changed React files
+  passed Prettier. Backend route/policy/database tests cover authorization,
+  exact evidence and concurrent decision history. No browser walkthrough is
+  claimed. No frontend dependency was added for this feature.

@@ -121,6 +121,12 @@ export default function TaLabsPage() {
                   >
                     Xem chi tiết
                   </Link>
+                  <Link
+                    to={`/ta/labs/${l.labId}/reviews`}
+                    className="ml-4 font-bold text-[#1d3f91]"
+                  >
+                    Hàng chờ review
+                  </Link>
                 </td>
               </tr>
             ))}
