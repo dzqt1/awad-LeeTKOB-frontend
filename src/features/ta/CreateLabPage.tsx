@@ -296,28 +296,7 @@ export default function CreateLabPage() {
           </label>
         </div>
         <div className="mt-6">
-          <div className="flex items-center justify-between">
-            <b>Ràng buộc</b>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() =>
-                setConstraints((current) => [
-                  ...current,
-                  {
-                    uid: crypto.randomUUID(),
-                    id: `C${current.length + 1}`,
-                    text: '',
-                    deduction: 1,
-                  },
-                ])
-              }
-              disabled={constraints.length >= 100}
-            >
-              <Plus size={16} />
-              Thêm ràng buộc
-            </Button>
-          </div>
+          <b>Ràng buộc</b>
           <div className="mt-3 space-y-3">
             {constraints.map((constraint, index) => (
               <div
@@ -372,25 +351,29 @@ export default function CreateLabPage() {
               </div>
             ))}
           </div>
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-3"
+            onClick={() =>
+              setConstraints((current) => [
+                ...current,
+                {
+                  uid: crypto.randomUUID(),
+                  id: `C${current.length + 1}`,
+                  text: '',
+                  deduction: 1,
+                },
+              ])
+            }
+            disabled={constraints.length >= 100}
+          >
+            <Plus size={16} />
+            Thêm ràng buộc
+          </Button>
         </div>
         <div className="mt-6">
-          <div className="flex items-center justify-between">
-            <b>Test private</b>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() =>
-                setTests((current) => [
-                  ...current,
-                  { uid: crypto.randomUUID(), input: '', expectedOutput: '' },
-                ])
-              }
-              disabled={tests.length >= 100}
-            >
-              <Plus size={16} />
-              Thêm test
-            </Button>
-          </div>
+          <b>Test private</b>
           <div className="mt-3 space-y-3">
             {tests.map((test, index) => (
               <div
@@ -439,6 +422,21 @@ export default function CreateLabPage() {
               </div>
             ))}
           </div>
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-3"
+            onClick={() =>
+              setTests((current) => [
+                ...current,
+                { uid: crypto.randomUUID(), input: '', expectedOutput: '' },
+              ])
+            }
+            disabled={tests.length >= 100}
+          >
+            <Plus size={16} />
+            Thêm test
+          </Button>
         </div>
         <Button type="submit" className="mt-4" disabled={isSubmitting}>
           {isSubmitting ? 'Đang tạo Lab...' : 'Tạo Lab'}
